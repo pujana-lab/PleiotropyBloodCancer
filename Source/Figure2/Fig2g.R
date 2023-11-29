@@ -6,8 +6,6 @@ library(ggplot2) # ‘3.4.3’
 library(cowplot) # ‘1.1.1’
 library(grid) # ‘4.3.2’
 
-packageVersion("cowplot")
-
 load(file="RData/leadSNP005.RData")
 load(file="RData/metadata.RData")
 load(file="RData/CancerLabel.RData")
