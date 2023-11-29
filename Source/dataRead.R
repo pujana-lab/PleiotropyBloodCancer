@@ -11,11 +11,11 @@ leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
          zscore_neoplasm=zscore_trait1,
          zscore_immunological=zscore_trait2)
 leadSNP005 <- leadSNP %>% filter(conjfdr < 0.05)
-save(leadSNP005, file="Data/leadSNP005.RData")
+save(leadSNP005, file="RData/leadSNP005.RData")
 
 # metadata info
 metadata <- fread("Data/metadata_pleio.tsv") %>% as.data.frame()
-save(metadata, file="Data/metadata.RData")
+save(metadata, file="RData/metadata.RData")
 
 # label for cancer traits 
 cancer.label <- data.frame(LabelInit=c("Onco iCOGs GWAS meta analysis","Onco iCOGs meta analysis luminal A","Breast cancer",
@@ -38,7 +38,7 @@ cancer.label <- data.frame(LabelInit=c("Onco iCOGs GWAS meta analysis","Onco iCO
                                       "Rectum","Bladder","BRCA2 BC",
                                       "BRCA2 OC","Kidney","Ovary",
                                       "Gastroesophageal"))
-save(cancer.label,file="Data/CancerLabel.RData")
+save(cancer.label,file="RData/CancerLabel.RData")
 
 # label for blood traits
 blood.label <- data.frame(LabelInit=c("Lymphocyte count","Monocyte count","Eosinophill count","Reticulocyte count",
@@ -55,5 +55,5 @@ blood.label <- data.frame(LabelInit=c("Lymphocyte count","Monocyte count","Eosin
                                      "MONO%","RDW","MCHC","PDW",
                                      "HCT","RBC#","PCT","IRF",
                                      "BASO#","BASO%","NRBCD"))
-save(blood.label,file="Data/BloodLabel.RData")
+save(blood.label,file="RData/BloodLabel.RData")
 
