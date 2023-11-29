@@ -1,5 +1,4 @@
-rm(list=ls())
-gc()
+# Plot depicting the relationship between the number of individuals in each GWAS analyzed and the number of identified pleiotropic variants
 
 library(dplyr) # [1] ‘1.1.3’
 library(tidyr) # [1] ‘1.3.0’

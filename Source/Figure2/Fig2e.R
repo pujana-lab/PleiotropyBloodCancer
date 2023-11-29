@@ -1,5 +1,4 @@
-rm(list=ls())
-gc()
+# Histogram depicting the number of variants shared by blood traits and cancer risk
 
 library(dplyr) # [1] ‘1.1.3’
 library(tidyr) # [1] ‘1.3.0’

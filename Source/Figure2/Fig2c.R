@@ -1,5 +1,4 @@
-rm(list=ls())
-gc()
+# Histogram depicting the distribution of classes of genetic elements across the identified pleiotropic loci and cancer studies
 
 library(dplyr) # [1] ‘1.1.3’
 library(tidyr) # [1] ‘1.3.0’
