@@ -57,3 +57,20 @@ blood.label <- data.frame(LabelInit=c("Lymphocyte count","Monocyte count","Eosin
                                      "BASO#","BASO%","NRBCD"))
 save(blood.label,file="RData/BloodLabel.RData")
 
+# Cancer levels
+cancer.levels <- c("Thyroid","Rectum","Prostate","Pancreas","Oropharyngeal","NHL","Melanoma","Lung","Leukemia","Kidney",
+                   "Gastroesophageal","Endometrium","Colon","Cervix","Bladder","Ovary","BRCA2 OC","BRCA1 OC","BC#2","BRCA2 BC",
+                   "BRCA1 BC","BRCA1 TNBC","BC#1 TNBC","BC#1 HER2+","BC#1 LumB/HER2-","BC#1 LumB","BC#1 LumA","BC#1")
+save(cancer.levels,file="RData/CancerLevels.RData")
+
+# Blood levels
+blood.levels <- c("HCT","HGB","MCHC","NRBCD","RBC#","RDW","MCV",
+                  "HLSR#","HLSR%","IRF","RET#","RET%",
+                  "MPV","PCT","PDW","PLT#",
+                  "BASO#","BASO%",
+                  "EO#","EO%", 
+                  "LYMPH#","LYMPH%",  
+                  "MONO#","MONO%", 
+                  "NEUT#","NEUT%",  
+                  "WBC#")
+save(blood.levels,file="RData/BloodLevels.RData")

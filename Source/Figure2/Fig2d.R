@@ -1,16 +1,14 @@
 # Plot depicting the relationship between the number of individuals in each GWAS analyzed and the number of identified pleiotropic variants
 
-library(dplyr) # [1] ‘1.1.3’
-library(tidyr) # [1] ‘1.3.0’
-library(ggplot2) # [1] ‘3.4.3’
-library(ggrepel) # [1] ‘0.9.3’
+library(dplyr) # ‘1.1.3’
+library(tidyr) # ‘1.3.0’
+library(ggplot2) # ‘3.4.3’
+library(ggrepel) # ‘0.9.3’
 
-packageVersion("dplyr")
-
-load(file="Data/leadSNP005.RData")
-load(file="Data/metadata.RData")
-load(file="Data/CancerLabel.RData")
-load(file="Data/BloodLabel.RData")
+load(file="RData/leadSNP005.RData")
+load(file="RData/metadata.RData")
+load(file="RData/CancerLabel.RData")
+load(file="RData/BloodLabel.RData")
 
 pleio.cancer.loci <- leadSNP005 %>% group_by(cancer_trait,blood_trait,locusnum,chrnum) %>% 
   summarize(start = min(chrpos), end = max(chrpos), cFDRmin = min(conjfdr), cFDRmax = max(conjfdr)) %>%

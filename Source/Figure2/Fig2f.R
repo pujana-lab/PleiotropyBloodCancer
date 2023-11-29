@@ -1,12 +1,12 @@
 # Histogram depicting the distribution of classes of genetic elements across the identified pleiotropic loci and blood traits
 
-library(dplyr) # [1] ‘1.1.3’
-library(tidyr) # [1] ‘1.3.0’
-library(ggplot2) # [1] ‘3.4.3’
+library(dplyr) # ‘1.1.3’
+library(tidyr) # ‘1.3.0’
+library(ggplot2) # ‘3.4.3’
 
-load(file="Data/leadSNP005Gene.RData")
-load(file="Data/metadata.RData")
-load(file="Data/BloodLabel.RData")
+load(file="RData/leadSNP005Gene.RData")
+load(file="RData/metadata.RData")
+load(file="RData/BloodLabel.RData")
 
 blood.sort <- leadSNP005.gene %>% left_join(metadata %>% select(id,Phenotype),by = c("blood_trait" = "id")) %>% 
   count(Phenotype,gene) %>% filter(!is.na(gene)) %>% count(Phenotype) %>% rename(numGenes = n) %>% 

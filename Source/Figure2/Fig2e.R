@@ -1,13 +1,13 @@
 # Histogram depicting the number of variants shared by blood traits and cancer risk
 
-library(dplyr) # [1] ‘1.1.3’
-library(tidyr) # [1] ‘1.3.0’
-library(ggplot2) # [1] ‘3.4.3’
+library(dplyr) # ‘1.1.3’
+library(tidyr) # ‘1.3.0’
+library(ggplot2) # ‘3.4.3’
 
-load(file="Data/leadSNP005.RData")
-load(file="Data/metadata.RData")
-load(file="Data/CancerLabel.RData")
-load(file="Data/BloodLabel.RData")
+load(file="RData/leadSNP005.RData")
+load(file="RData/metadata.RData")
+load(file="RData/CancerLabel.RData")
+load(file="RData/BloodLabel.RData")
 
 pleio.blood.loci <- leadSNP005 %>% mutate(blood_trait = substr(blood_trait,1,nchar(blood_trait)-2)) %>% 
   group_by(blood_trait,cancer_trait,locusnum,chrnum) %>% 

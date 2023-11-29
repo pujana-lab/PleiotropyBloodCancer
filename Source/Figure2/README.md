@@ -12,3 +12,10 @@ Histogram depicting the number of variants shared by blood traits and cancer ris
 
 # Fig2f.R
 Histogram depicting the distribution of classes of genetic elements across the identified pleiotropic loci and blood traits
+
+# Fig2g.R
+Pie charts showing the contribution of each blood trait to each cancer risk study based on the
+number of shared variants
+
+# Fig2h.R
+Heatmap showing the overrepresentation and underrepresentation of blood trait-shared variants for each cancer study
