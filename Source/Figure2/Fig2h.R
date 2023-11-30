@@ -55,7 +55,7 @@ df.plot <- df.fisher %>% left_join(chisq.resid,by=c("blood_trait","cancer_trait"
   left_join(metadata %>% select(id,Phenotype),by = c("cancer_trait" = "id")) %>% left_join(cancer.label,by=c("Phenotype"="LabelInit")) %>%
   rename(cancer_trait_old=cancer_trait) %>% rename(cancer_trait=LabelNew) %>% select(cancer_trait,blood_trait,pvalue,padj,signif,resid)
 
-postscript(file="Output/Figure7h.ps")
+postscript(file="Output/Figure2h.ps")
 df.plot %>% mutate(cancer_trait=factor(cancer_trait,levels=cancer.levels)) %>%
   ggplot(aes(x = blood_trait , y = cancer_trait, fill = resid)) + 
   geom_tile() +

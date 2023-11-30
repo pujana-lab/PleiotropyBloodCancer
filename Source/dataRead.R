@@ -101,3 +101,18 @@ save(chrcum,file="RData/ChrCumulative.RData")
 regionSNPs <- fread("Data/regionSNPs.tsv",sep="\t") %>% as.data.frame()
 colnames(regionSNPs) <- c("region","chr","start","end","label")
 save(regionSNPs,file="RData/regionSNP.RData")
+
+# EQTLs Lymph v1 gene_id, slope, chr_pos (GRCh38/hg38)
+filename <- c("Cells_EBV-transformed_lymphocytes.v8.signif_variant_gene_pairs.txt.gz")
+eQTLs.lymp <- fread(file=file.path("Data",filename)) %>% 
+  separate(variant_id,c("chr","pos","A1","A2","b")) %>% mutate(variant_id=paste(chr,pos,sep="_")) %>%
+  mutate(gene_id=substr(gene_id,1,15)) %>% distinct(gene_id,slope,variant_id)
+save(eQTLs.lymp,file="RData/eQTLsLymph.RData")
+
+# EQTLs WBlood v1 gene_id, slope, chr_pos (GRCh38/hg38)
+filename <- c("Whole_Blood.v8.signif_variant_gene_pairs.txt.gz")
+eQTLs.wblood <- fread(file=file.path("Data",filename)) %>% 
+  separate(variant_id,c("chr","pos","A1","A2","b")) %>% mutate(variant_id=paste(chr,pos,sep="_")) %>%
+  mutate(gene_id=substr(gene_id,1,15)) %>% distinct(gene_id,slope,variant_id)
+save(eQTLs.wblood,file="RData/eQTLsWBlood.RData")
+
