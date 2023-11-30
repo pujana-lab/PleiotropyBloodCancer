@@ -1,6 +1,7 @@
 # read data and save in .RData files
 
-library(data.table) # [1] ‘1.14.8’
+library(data.table) # ‘1.14.8’
+library(readxl) # ‘1.4.3’
 
 # read pleiotropic SNP list (pleio_loci.tsv). Filter to conjfdr < 0.05
 leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
@@ -74,3 +75,29 @@ blood.levels <- c("HCT","HGB","MCHC","NRBCD","RBC#","RDW","MCV",
                   "NEUT#","NEUT%",  
                   "WBC#")
 save(blood.levels,file="RData/BloodLevels.RData")
+
+# Genes telomere 
+telomereSNP <- read_excel("Data/13_genes_telomere-snps.xlsx", 
+                          sheet="Sheet1",col_names=paste0("V",seq(1,18)))
+telomereSNP005 <- telomereSNP %>% filter(V9 < 0.05)
+save(telomereSNP005,file="RData/telomereGene005.RData")
+
+# Number bases at each chr. Start y end for each chr in an acumulative way
+chrlen <- c(249250621,243199373,198022430,191154276,180915260,171115067,
+            159138663,146364022,141213431,135534747,135006516,133851895,	
+            115169878,107349540,102531392,90354753,81195210,78077248,
+            59128983,63025520,48129895,51304566)
+names(chrlen) <- seq(1:22)
+
+chrend <- cumsum(chrlen)
+chrstart <- c(0,chrend[1:21]) + 1 
+
+chrcum <- as.data.frame(cbind(names(chrlen),chrstart,chrend))
+colnames(chrcum) <- c("chrnum","chrstart","chrend")
+chrcum <- chrcum %>% mutate(chrnum = as.integer(chrnum), chrstart = as.double(chrstart), chrend = as.double(chrend))
+save(chrcum,file="RData/ChrCumulative.RData")
+
+# Region SNPs
+regionSNPs <- fread("Data/regionSNPs.tsv",sep="\t") %>% as.data.frame()
+colnames(regionSNPs) <- c("region","chr","start","end","label")
+save(regionSNPs,file="RData/regionSNP.RData")
