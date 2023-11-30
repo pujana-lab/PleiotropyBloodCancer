@@ -14,6 +14,7 @@ enh.files <- list.files("Data/HTEA")
 nSNP <- list()
 for (f in enh.files) {
   cell <- gsub("_differentially_expressed_enhancers.bed","",f)
+# https://enhancer.binf.ku.dk/human_enhancers/presets
   cell <- gsub("CL_[0-9]*_","",cell)
   cell <- gsub("UBERON_[0-9]*_","",cell)
   enhancer <- fread(file=file.path("Data/HTEA",f),

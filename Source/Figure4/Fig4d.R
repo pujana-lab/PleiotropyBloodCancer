@@ -1,5 +1,4 @@
-# Uniform Manifold Approximation and Projection (UMAP) of the pleiotropic gene signature expression (score indicated in inset) 
-# in the bone marrow single-cell RNA sequencing profiles
+# Violin plot showing the distribution of the pleiotropic signature expression score in each bone marrow cell type (X-axis)
 
 library(dplyr) # ‘1.1.3’
 library(tidyr) # ‘1.3.0’
@@ -15,8 +14,8 @@ DICE.tpm.mat <- as.matrix(DICE.tpm %>% dplyr::select(-gene))
 rownames(DICE.tpm.mat) <- DICE.tpm %>% pull(gene)
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37" ,dataset = "hsapiens_gene_ensembl")
 DICE.biomart37.genes <- getBM(filters="ensembl_gene_id",values=rownames(DICE.tpm.mat),
-                                       attributes = c("hgnc_symbol","ensembl_gene_id","gene_biotype"),
-                                       mart=ensemblGRCh37.genes)
+                              attributes = c("hgnc_symbol","ensembl_gene_id","gene_biotype"),
+                              mart=ensemblGRCh37.genes)
 
 # select genes TPM > 1
 DICE.tpm.expr <- rownames(DICE.tpm.mat)[(apply(DICE.tpm.mat > 1,1,all))]
@@ -41,12 +40,29 @@ for (i in seq(1,100)) {
 
 # run score calculation
 wta.leadSNP <- AddModuleScore(scRNA.data.DICE,
-                                      features = gene.set,
-                                      name="WTA")
+                              features = gene.set,
+                              name="WTA")
 
-# UMAP plot + scores
-postscript(file="Output/Figure4c.ps")
-FeaturePlot(wta.leadSNP,
-                    features = "WTA1", label = TRUE, repel = TRUE) +
-  scale_colour_gradientn(colours = rev(RColorBrewer::brewer.pal(n = 11, name = "RdBu")))
+score.WTA <- wta.leadSNP[[]]
+
+# violin plot
+score.leadSNP <- score.WTA %>% dplyr::select(Prediction_Healthy,WTA1)
+score.random <- score.WTA %>% dplyr::select(Prediction_Healthy,starts_with("WTA")) %>% dplyr::select(-WTA1)
+
+cell.levels <- score.leadSNP %>% group_by(Prediction_Healthy) %>% summarise(m=median(WTA1)) %>% arrange(desc(m)) %>% pull(Prediction_Healthy)
+
+random.cell <- score.random %>%
+  pivot_longer(-c(Prediction_Healthy),names_to="random",values_to="score") %>% group_by(Prediction_Healthy) %>%
+  summarise(m=mean(score))
+
+postscript(file="Output/Figure4d.ps",paper="special",width=40,height=20,onefile=FALSE,horizontal=FALSE)
+score.leadSNP %>% mutate(Prediction_Healthy=factor(Prediction_Healthy,levels=cell.levels)) %>% ggplot(aes(x=Prediction_Healthy,y=WTA1)) +
+  geom_violin(trim=FALSE) +
+  geom_boxplot(width=0.1,outlier.alpha=0) +
+  geom_jitter(shape=16,color="grey",position=position_jitter(0.1),size=0.5) +
+  theme_classic() +
+  theme(axis.text.x=element_text(angle = 60, hjust=1),text=element_text(size=26)) +
+  xlab("") +
+  ylab("Score") +
+  geom_point(color="red",data=random.cell,aes(x=Prediction_Healthy,y=m))
 dev.off()
