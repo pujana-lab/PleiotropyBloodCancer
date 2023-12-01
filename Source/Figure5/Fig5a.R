@@ -4,13 +4,14 @@
 library(dplyr) # ‘1.1.3’
 library(tidyr) # ‘1.3.0’
 library(biomaRt) # ‘2.56.1’
+library(ggplot2) # ‘3.4.3’
 
 load(file="RData/leadSNP005.RData")
 load(file="RData/metadata.RData")
 load(file="RData/CancerLabel.RData")
 load(file="RData/CancerLevels.RData")
 
-# YRNA + RNY annotated BiomaRt GRCh37
+# RNY annotated BiomaRt GRCh37
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37", dataset = "hsapiens_gene_ensembl")
 biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                  attributes = c("ensembl_gene_id","external_gene_name","chromosome_name",
@@ -18,6 +19,7 @@ biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                  mart=ensemblGRCh37.genes)
 biomart37.yrnarny <- biomart37.misc %>% filter((external_gene_name=="Y_RNA" | grepl("RNY",external_gene_name)) & chromosome_name %in% seq(1,22))
 
+# Assignment of RNY to nearby SNP
 yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_name)) %>% 
   left_join(leadSNP005 %>% rename(chr=chrnum,pos=chrpos),by=c("chromosome_name"="chr"),relationship="many-to-many") %>% 
   filter(pos>=(start_position-50000) & pos<=(end_position+50000)) %>% 

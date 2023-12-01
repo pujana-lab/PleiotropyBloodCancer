@@ -1,12 +1,4 @@
 # Histogram showing the distribution of identified RNA repeat elements across the pleiotropic loci
-rm(list=ls())
-gc()
-# pathR <- c("/media/mapardo/SeagateBasic/procure/RData/pleiotStudy")
-# pathExt <- c("/media/mapardo/SeagateBasic/procure/dataExt")
-
-# box::use(dplyr[...])
-# box::use(tidyr[...])
-# box::use(ggplot2[...])
 
 library(dplyr) # ‘1.1.3’
 library(tidyr) # ‘1.3.0’
