@@ -1,4 +1,4 @@
-# Figure 1. Forestplot depicting multivariate Cox proportional hazards model for the risk of incident cancer diagnosis within one year from recruitment
+# Figure 1. Forestplot depicting multivariate Cox proportional hazards model for the risk of incident cancer diagnosis within one year from recruitment.
 
 library(dplyr) 
 library(tidyr) 
