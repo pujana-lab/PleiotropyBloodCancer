@@ -120,7 +120,6 @@ write.table(SNP.LD.04,file="Data/SNP_LD_lupus_sjorgen_04.csv",sep=",",row.names 
 # https://cran.r-project.org/web/packages/snpsettest/vignettes/reference_1000Genomes.html
 # 2. Prepare 1000G data for PLINK
 #     1000GEURplink.sh
-#     splitfilechr.sh
 # 3. Build list SNP to generate random SNPs sets (pleiotropic SNPs were removed)
 #     plink --bfile EUR_phase3_autosomes --recode --out EUR_phase3_autosomes_snp
 #     cut -f 2 EUR_phase3_autosomes_snp.map > snps.map
