@@ -1,7 +1,5 @@
-# TODO Estoy completando el GAP de calculo para estimar los SNP random
-# TODO Para eso necesito primero que plink me acepte el chromosoma X
-# TODO Correr LDMatrix (de momento dejo una prueba con 10 ficheros)
-# TODO Entender/Limpiar la parte de formar los grupos
+# Histograms showing the percentage of pleiotropic variants identified as eQTL in whole blood (left panel) or 
+# immortalized lymphocytes (right panel) of the corresponding candidate genes
 
 library(dplyr) # ‘1.1.3’
 library(tidyr) # ‘1.3.0’
@@ -23,7 +21,7 @@ leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
                 zscore_neoplasm=zscore_trait1,
                 zscore_immunological=zscore_trait2)
 leadSNP005 <- leadSNP %>% filter(conjfdr < 0.05)
-# regions
+# regions (TERT, HLA-B, HLA-DPB1, HLA-DQA2, HLA-DQB1, CRHR1, ATM)
 genes <- c("TERT","HLA-B","HLA-DPB1","HLA-DQA2","HLA-DQB1","CRHR1","ATM")
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37", dataset = "hsapiens_gene_ensembl")
 genes.info <- getBM(filters= "hgnc_symbol", attributes = c("hgnc_symbol","chromosome_name","start_position","end_position"), 
@@ -36,7 +34,7 @@ genes.info <- rbind(genes.info,
 genes.SNP <- leadSNP005 %>% 
   inner_join(genes.info %>% dplyr::select(hgnc_symbol,chromosome_name,startSNP,endSNP),by=c("chrnum"="chromosome_name"),relationship="many-to-many") %>% 
   filter(chrpos>startSNP & chrpos<endSNP) %>% dplyr::select(snpid,chrnum,chrpos,ends_with("trait"),starts_with("zscore"),hgnc_symbol)
-# convert SNP pleio to GRCh38
+# convert SNP to GRCh38
 chainhg19toHg38 <- import.chain("Data/hg19ToHg38.over.chain")
 df <- genes.SNP  %>% mutate(chrnum=paste0("chr",chrnum))
 grhg19 <- GenomicRanges::GRanges(names=df %>% pull(snpid),seqnames=df %>% pull(chrnum),
@@ -47,7 +45,7 @@ SNPsGRCh38 <- as.data.frame(grHg38) %>% distinct(seqnames,start,names)
 genes.SNP.GRCh38 <- genes.SNP %>% left_join(SNPsGRCh38,by=c("snpid"="names")) %>% 
   mutate(variant_id=paste(seqnames,start,sep="_")) %>% dplyr::select(-seqnames,-start,-chrnum,-chrpos) %>% distinct(hgnc_symbol,variant_id) %>%
   dplyr::rename(target=hgnc_symbol)
-# assign HGNC symbol & ensg ID to target genes
+# assign HGNC symbol and ENSGID to target genes
 gene.target <- data.frame(target=c("TERT","ATM","HLA-B","CRHR1","HLA-DQB1","HLA-DQA2","HLA-DPB1",rep("APOBEC3",7)),
                           gene=c("TERT","ATM","HLA-B","CRHR1","HLA-DQB1","HLA-DQA2","HLA-DPB1",paste0("APOBEC3",c("A","B","C","D","F","G","H"))))
 ensemblGRCh38.genes <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
@@ -55,16 +53,13 @@ genes.name <- getBM(filters= "hgnc_symbol", attributes = c("hgnc_symbol","ensemb
                              values=gene.target %>% pull(gene),mart=ensemblGRCh38.genes) %>% filter(chromosome_name %in% seq(1,22))
 gene.target <- gene.target %>% left_join(genes.name %>% dplyr::select(-chromosome_name),by=c("gene"="hgnc_symbol"))
 genes.SNP.GRCh38 <- genes.SNP.GRCh38 %>% left_join(gene.target,by=c("target"),relationship="many-to-many") %>% dplyr::rename(gene_id=ensembl_gene_id)
-# save(genes.SNP.GRCh38,file=file.path(pathR,"genesSNPGRCh38.RData"))
 
-## TODO Generate random SNP set ####
+## Build random SNP set ####
 # 1. Prepare 1000G data for PLINK
 # Download 1000G data 
 # https://cran.r-project.org/web/packages/snpsettest/vignettes/reference_1000Genomes.html
 # Prepare 1000G data for PLINK
 #     1000GEURplink.sh
-#     splitfilechr.sh
-
 # 2. LD matrix for SNPs nearby random selected genes
 # read 1000 random selected genes
 random.gene <- as.data.frame(read_excel(path="Data/Fig3d/1000randomgenes_DICE_TPM-higher1.xlsx",
@@ -105,9 +100,8 @@ for (file in SNPs.files) {
     ldSNPs1000[[file]] <- LDlinkR::LDmatrix(SNPs.sel,pop="EUR",r2d="r2",token="e0b6745d1a68")
   }
 }
-
 # 4. Assign each gene to a group (0.1,0.25,0.5,0.75,0.90)
-# determine convenient groups for each gene
+# min and max for mean LD are use to fix possible groups for each gene
 r2ange <- NULL
 cuts <- matrix(c(0.000,0.1,0.89,0.99),ncol=2,byrow=TRUE)
 for (gene in names(ldSNPs1000)) {
@@ -163,9 +157,8 @@ ldSNPs.subgrps <- data.frame(gene=names(ldSNPs1000),r2ange) %>% mutate(G010=case
   max > 0.75 ~ TRUE,
   TRUE ~ FALSE
 ))
-
 # 5. Assign group to each gene. 
-# each group should have 200 genes aprox but groups 0.90 and 0.75 are difficult to build so requeriment is relaxed
+# each group should have aproximately 200 genes, but groups 0.90 and 0.75 are difficult to build so requirement is relaxed
 gene090 <- sample(ldSNPs.subgrps %>% filter(G090) %>% pull(gene),170)
 ldSNPs.subgrps <- ldSNPs.subgrps %>% mutate(grp =case_when(
   gene %in% gene090 ~ "G090",
@@ -186,7 +179,6 @@ gene010 <- sample(ldSNPs.subgrps %>% filter(is.na(grp) & G010) %>% pull(gene),20
 ldSNPs.subgrps <- ldSNPs.subgrps %>% mutate(grp =case_when(
   gene %in% gene010 ~ "G010",
   TRUE ~ grp))
-
 # 6. Create set of SNPs for each gene that meet requirements
 SNPfinal <- list()
 r2med <- NULL
@@ -243,7 +235,7 @@ for (g in ldSNPs.subgrps %>% filter(!(is.na(grp))) %>% pull(gene)) {
 SNPs.grp.gene <- data.frame(gene=names(unlist(SNPfinal)),snpid=unlist(SNPfinal)) %>% mutate(gene=substr(gene,1,15)) %>% 
   left_join(ldSNPs.subgrps %>% select(gene,grp) %>% mutate(gene=substr(gene,1,15)),by=c("gene"))
 
-## TODO Proportions Wblood ####
+## Proportions Wblood ####
 # read EQTLs WBlood v1 gene_id, slope, chr_pos (GRCh38/hg38)
 filename <- c("Whole_Blood.v8.signif_variant_gene_pairs.txt.gz")
 # https://gtexportal.org/home/datasets
@@ -279,7 +271,7 @@ SNP.prop %>% ggplot(aes(x=target,y=porc,fill=eQTL)) +
   scale_fill_manual(values=c("white","deepskyblue","coral1"),name="eQTLs")
 dev.off()  
 
-## Proportions Lymph
+## Proportions Lymph ####
 # read EQTLs Lymph v1 gene_id, slope, chr_pos (GRCh38/hg38)
 filename <- c("Cells_EBV-transformed_lymphocytes.v8.signif_variant_gene_pairs.txt.gz")
 # https://gtexportal.org/home/datasets

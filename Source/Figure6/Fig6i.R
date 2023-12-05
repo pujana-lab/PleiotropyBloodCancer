@@ -13,7 +13,7 @@ library(biomaRt) # ‘2.56.1’
 
 ##  Read expression data for GSE71008 (exRNA_Patel_tushar)
 # https://exrna-atlas.org/exat/datasets/EXR-TPATE1OqELFf-AN#EXRTPATE1OqELFfAN
-# Data info
+# sample info data
 bios.files <- list.files(path="Data/Patel_Tushar/biosampleMetadata",pattern="*metadata.tsv")
 bios.info <- NULL
 for (file.name in bios.files) {
@@ -22,7 +22,6 @@ for (file.name in bios.files) {
 }
 colnames(bios.info) <- c("sample","file","tumor")
 bios.info <- as.data.frame(bios.info)
-
 donor.files <- list.files(path="Data/Patel_Tushar/donorMetadata",pattern="*metadata.tsv")
 donor.info <- NULL
 for (file.name in donor.files) {
@@ -30,10 +29,8 @@ for (file.name in donor.files) {
 }
 colnames(donor.info) <- c("file","type","status","sex","age")
 donor.info <- as.data.frame(donor.info) %>% mutate(age = as.integer(gsub(" y","",age)))
-
 info <- bios.info %>% left_join(donor.info,by=c("file"))
-
-# Counts data
+# counts data
 sample.counts <- list()
 sample.stats <- NULL
 count <- c(0)
@@ -59,8 +56,7 @@ for (id in info$sample) {
   ensemblID.list <- c(ensemblID.list,sample.counts[[id]] %>% pull(ensemblID))
 }
 ensemblID.list <- unique(ensemblID.list)
-
-# Ensembl gene ID for Ensembl transcript ID annotation
+# ensembl gene ID for Ensembl transcript ID annotation
 ensembl.genes <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl")
 biomart.exrna <- getBM(filters="ensembl_transcript_id",values=ensemblID.list,
                                 attributes = c("ensembl_transcript_id","ensembl_gene_id","external_gene_name","chromosome_name",
@@ -68,7 +64,7 @@ biomart.exrna <- getBM(filters="ensembl_transcript_id",values=ensemblID.list,
                                                "gene_biotype","strand"), 
                                 mart=ensembl.genes) %>% filter(chromosome_name %in% seq(1,22)) 
 
-# Build expression matrix (genes/samples)
+# build expression matrix (genes/samples)
 rnaseq.matrix <- NULL
 for (id in names(sample.counts)) {
   ReadCount <- sample.stats %>% filter(sample==id & Stage=="input") %>% pull(ReadCount)
@@ -89,7 +85,7 @@ biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                        "start_position","end_position","gene_biotype","strand"), 
                         mart=ensemblGRCh37.genes)
 biomart37.yrnarny <- biomart37.misc %>% filter((external_gene_name=="Y_RNA" | grepl("RNY",external_gene_name)) & chromosome_name %in% seq(1,22))
-# Assignment of RNY to nearby SNP
+# assignment of RNY to nearby SNP
 yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_name)) %>% 
   left_join(leadSNP005 %>% rename(chr=chrnum,pos=chrpos),by=c("chromosome_name"="chr"),relationship="many-to-many") %>% 
   filter(pos>=(start_position-50000) & pos<=(end_position+50000)) %>% 
@@ -97,7 +93,7 @@ yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_n
     strand == 1 ~ dist_start,
     strand == -1 ~ dist_end
   )) %>% filter(!(chromosome_name == 6 & between(pos,29500000,33500000))) 
-# Group RNY: pleiotropic and non-pleiotropic
+# group RNY: pleiotropic and non-pleiotropic
 yrna.pleio <- yrna.snp %>% distinct(ensembl_gene_id,external_gene_name,chromosome_name,start_position,end_position,gene_biotype,strand)
 yrna.nonpleio <- biomart37.yrnarny %>% filter(!(ensembl_gene_id %in% yrna.pleio$ensembl_gene_id))
 yrna.class <- list(pleio=yrna.pleio$ensembl_gene_id,nonpleio=yrna.nonpleio$ensembl_gene_id)

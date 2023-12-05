@@ -12,10 +12,17 @@ biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                        "start_position","end_position","gene_biotype","strand"), 
                         mart=ensemblGRCh37.genes)
 biomart37.yrnarny <- biomart37.misc %>% filter((external_gene_name=="Y_RNA" | grepl("RNY",external_gene_name)) & chromosome_name %in% seq(1,22))
+# read pleiotropic SNP list (pleio_loci.tsv). Filter to conjfdr < 0.05
+leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
+  rename(cancer_trait=trait1,
+         blood_trait=trait2,
+         pval_neoplasm=pval_trait1,
+         pval_immunological=pval_trait2,
+         zscore_neoplasm=zscore_trait1,
+         zscore_immunological=zscore_trait2)
+leadSNP005 <- leadSNP %>% filter(conjfdr < 0.05)
 
-# Assignment of RNY to nearby SNP
-load(file="RData/leadSNP005.RData")
-
+# assignment of RNY to nearby SNP
 yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_name)) %>% 
   left_join(leadSNP005 %>% rename(chr=chrnum,pos=chrpos),by=c("chromosome_name"="chr"),relationship="many-to-many") %>% 
   filter(pos>=(start_position-50000) & pos<=(end_position+50000)) %>% 
@@ -23,13 +30,10 @@ yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_n
     strand == 1 ~ dist_start,
     strand == -1 ~ dist_end
   )) %>% filter(!(chromosome_name == 6 & between(pos,29500000,33500000))) 
-
-# Density plot
+# plot
 yrna.snp.count <- yrna.snp %>% distinct(ensembl_gene_id,snpid) %>% count(ensembl_gene_id) %>% 
   mutate(total.yrna=length(unique(yrna.snp %>% pull(ensembl_gene_id))))
-
 yrna.snp.dens <- yrna.snp %>% distinct(ensembl_gene_id,snpid,dist) %>% left_join(yrna.snp.count,by=c("ensembl_gene_id")) %>% mutate(s=1/(n*total.yrna))
-
 postscript(file="Output/Figure6a.ps")
 yrna.snp.dens %>%
   ggplot(aes(x=dist,weight=s)) +

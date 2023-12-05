@@ -9,7 +9,7 @@ library(biomaRt) # ‘2.56.1’
 library(LDlinkR) # ‘1.3.0’
 # PLINK v1.90b6.26 64-bit (2 Apr 2022)  www.cog-genomics.org/plink/1.9/
 
-### 1. Check how many Sjorgen and SLE SNPs have r2 >0.4 or r2 > 0.8 with pleiotropic SNPs
+### 1. Check how many Sjorgen and SLE SNPs have r2 >0.4 or r2 > 0.8 with pleiotropic SNPs ####
 ## Pleiotropic SNPs nearby YRNA (270)
 # RNY annotated BiomaRt GRCh37
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37", dataset = "hsapiens_gene_ensembl")
@@ -86,7 +86,6 @@ snp.lupus <- rbind(snpGRCh37.lupus.chr,
 
 ## Calculate r2 and check for r2>0.4 or r2>0.8
 snp <- rbind(data.frame(snp.yrna.pleio,set="yrnapleio"),data.frame(snp.sjorgen,set="sjorgen"),data.frame(snp.lupus,set="lupus"))
-
 # calculate LD r2
 LDres <- list()
 for (chrom in seq(1,22)) {
@@ -94,7 +93,6 @@ for (chrom in seq(1,22)) {
   snp.rsid <- unique(snp %>% filter(chr==chrom) %>% pull(snpid))
   LDres[[paste0("chr",chrom)]] <- LDlinkR::LDmatrix(snp.rsid,pop="EUR",r2d="r2",token="e0b6745d1a68",genome_build = "grch37")
 }
-
 LDtotal <- NULL
 for (chrom in paste0("chr",seq(1,22))) {
   LDtotal <- rbind(LDtotal,LDres[[chrom]] %>% rename(snp1=RS_number) %>% pivot_longer(-c(snp1),names_to = "snp2", values_to = "r2")) %>%
@@ -115,7 +113,7 @@ ld04 <- length(unique(SNP.LD.04 %>% pull(snp2)))
 # 17
 write.table(SNP.LD.04,file="Data/SNP_LD_lupus_sjorgen_04.csv",sep=",",row.names = FALSE)
 
-### 2. Generate random test same size lupus catalog (917)
+### 2. Generate random test same size lupus catalog (917) ####
 # 1. Download 1000G data 
 # https://cran.r-project.org/web/packages/snpsettest/vignettes/reference_1000Genomes.html
 # 2. Prepare 1000G data for PLINK
@@ -127,11 +125,10 @@ write.table(SNP.LD.04,file="Data/SNP_LD_lupus_sjorgen_04.csv",sep=",",row.names 
 # 4. Build 1000 randon set 917 SNP
 #     randomSetSNPlupus.sh (shuf -n 917 snpsNOpleio.map > randomSetXXXX.txt)
 
-### 3. Calculate how many SNPs in random sets have LD > 0.4 or LD > 0.8 
+### 3. Calculate how many SNPs in random sets have LD > 0.4 or LD > 0.8  ####
 # pleiotropic SNPs nearby RNY (270)
 snp.yrna.pleio <- data.frame(snp.yrna.pleio,coord=paste0(snp.yrna.pleio$chr,":",snp.yrna.pleio$pos))
 snp.pleio <- data.frame(coord=paste(snp.yrna.pleio$chr,snp.yrna.pleio$pos,sep=":"),snp.yrna.pleio %>% dplyr::select(snpid))
-
 # add info from SNPsnap to pleiotropic SNPs nearby RNY. 
 # SNP out from this range (loci_upstream and loci_downstream) it is unlikely to have LD > 0.4 or LD > 0.8
 # randomSetXXXX.txt ---> LDrandomXXXX_08.csv/LDrandomXXXX_04.csv
@@ -186,7 +183,7 @@ for (rn in seq(1,10)) {
   }
 }
 
-###  4. Plot results
+###  4. Plot results ####
 LD08 <- list()
 LD04 <- list()
 # SNP pleio near YRNA that correlates with SNP random
@@ -196,7 +193,6 @@ for (rn in seq(1,1000)) {
   LD04[[rn]] <- fread(file=file.path("Output/Fig7b/LDrandom",paste0("LDrandom",rn,"_04.csv")),col.names=c("snp1","snp2","r2")) %>% 
     group_by(snp1,snp2) %>% summarise(r2=max(r2)) %>% ungroup() %>% filter(r2>0.4)
 }
-
 postscript(file="Output/Fig7b/Figure7bLeft.ps")
 data.frame(n=unlist(lapply(LD04,function(x) length(unique(x$snp2))))) %>% 
   ggplot(aes(x=n)) +
@@ -207,7 +203,6 @@ data.frame(n=unlist(lapply(LD04,function(x) length(unique(x$snp2))))) %>%
   geom_segment(aes(x=ld04,y=100,xend=ld04,yend=0),color="red",arrow = arrow(length = unit(0.25, "cm"))) +
   theme(text=element_text(size=18))
 dev.off() 
-
 postscript(file="Output/Fig7b/Figure7bRight.ps")
 data.frame(n=unlist(lapply(LD08,function(x) length(unique(x$snp2))))) %>%
   ggplot(aes(x=n)) +

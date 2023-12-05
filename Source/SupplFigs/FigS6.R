@@ -57,7 +57,6 @@ YRNA.plot <- YRNA.labels %>% left_join(yrna.pleio,by=c("YRNA")) %>%
     is.na(external_gene_name) ~ YRNA,
     TRUE ~ external_gene_name
   ))
-
 # generate plot
 tree<-nj(dnbin)
 YRNA.pleio <- list(Pleio=which(YRNA.plot$SNP == "Pleio" & YRNA.plot$external_gene_name != "RNY4"),

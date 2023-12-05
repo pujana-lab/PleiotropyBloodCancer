@@ -6,10 +6,23 @@ library(tidyr) # ‘1.3.0’
 library(biomaRt) # ‘2.56.1’
 library(ggplot2) # ‘3.4.3’
 
-load(file="RData/leadSNP005.RData")
-load(file="RData/metadata.RData")
-load(file="RData/CancerLabel.RData")
-load(file="RData/CancerLevels.RData")
+# read pleiotropic SNP list (pleio_loci.tsv). Filter to conjfdr < 0.05
+leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
+  rename(cancer_trait=trait1,
+         blood_trait=trait2,
+         pval_neoplasm=pval_trait1,
+         pval_immunological=pval_trait2,
+         zscore_neoplasm=zscore_trait1,
+         zscore_immunological=zscore_trait2)
+leadSNP005 <- leadSNP %>% filter(conjfdr < 0.05)
+# read metadata
+metadata <- fread("Data/metadata_pleio.tsv") %>% as.data.frame()
+# cancer label 
+cancer.label <- fread(file="Data/cancerLabel.csv")
+# cancer levels
+cancer.levels <- c("Thyroid","Rectum","Prostate","Pancreas","Oropharyngeal","NHL","Melanoma","Lung","Leukemia","Kidney",
+                   "Gastroesophageal","Endometrium","Colon","Cervix","Bladder","Ovary","BRCA2 OC","BRCA1 OC","BC#2","BRCA2 BC",
+                   "BRCA1 BC","BRCA1 TNBC","BC#1 TNBC","BC#1 HER2+","BC#1 LumB/HER2-","BC#1 LumB","BC#1 LumA","BC#1")
 
 # RNY annotated BiomaRt GRCh37
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37", dataset = "hsapiens_gene_ensembl")
@@ -18,8 +31,7 @@ biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                                 "start_position","end_position","gene_biotype","strand"), 
                                  mart=ensemblGRCh37.genes)
 biomart37.yrnarny <- biomart37.misc %>% filter((external_gene_name=="Y_RNA" | grepl("RNY",external_gene_name)) & chromosome_name %in% seq(1,22))
-
-# Assignment of RNY to nearby SNP
+# assignment of RNY to nearby SNP
 yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_name)) %>% 
   left_join(leadSNP005 %>% rename(chr=chrnum,pos=chrpos),by=c("chromosome_name"="chr"),relationship="many-to-many") %>% 
   filter(pos>=(start_position-50000) & pos<=(end_position+50000)) %>% 
@@ -29,11 +41,6 @@ yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_n
   )) %>% filter(!(chromosome_name == 6 & between(pos,29500000,33500000))) 
 n.yrna <- length(unique(yrna.snp %>% pull(ensembl_gene_id)))
 n.snp <- length(unique(yrna.snp %>% pull(snpid)))
-
-yrna.pleio <- yrna.snp %>% distinct(ensembl_gene_id,external_gene_name,chromosome_name,start_position,end_position,gene_biotype,strand)
-yrna.nonpleio <- biomart37.yrnarny %>% filter(!(ensembl_gene_id %in% yrna.pleio$ensembl_gene_id))
-yrna.class <- list(pleio=yrna.pleio$ensembl_gene_id,nonpleio=yrna.nonpleio$ensembl_gene_id)
-
 # percentage SNPs mapped to YRNA
 SNP <- NULL
 for (cancer in unique(leadSNP005 %>% pull(cancer_trait))) {
@@ -46,21 +53,17 @@ n <- c(n,length(unique(yrna.snp %>% pull(snpid))))
 SNP <- rbind(SNP,n)
 rownames(SNP) <- c(unique(leadSNP005 %>% pull(cancer_trait)),"All")
 colnames(SNP) <- c("total","YRNA")
-
 numSNP.yrna.cancer <- as.data.frame(SNP) %>% mutate(cancer_trait=rownames(SNP)) %>% 
   pivot_longer(-cancer_trait,names_to = "type",values_to = "SNPs")
-
 percSNP.yrna.cancer <- numSNP.yrna.cancer %>% 
   left_join(numSNP.yrna.cancer %>% filter(type == "total") %>% dplyr::select(-type) %>% rename(total=SNPs),by=c("cancer_trait")) %>%
   filter(type != "total") %>% mutate(perc=SNPs/total*100)
-
 percSNP.yrna.cancer <- rbind(percSNP.yrna.cancer,percSNP.yrna.cancer %>% mutate(perc = 100-perc) %>% mutate(type="Others"))
-
 percSNP.yrna.cancer <- percSNP.yrna.cancer %>% left_join(metadata %>% dplyr::select(id,Phenotype),by=c("cancer_trait"="id")) %>% 
   left_join(cancer.label,by=c("Phenotype"="LabelInit")) %>% dplyr::select(-Phenotype) %>% rename(Phenotype=LabelNew)  %>% 
   mutate(type=factor(type,levels=c("Others","YRNA"))) %>% mutate_if(is.character,coalesce,"All") %>%
   mutate(Phenotype=factor(Phenotype, levels=c(rev(cancer.levels),"All")))
-
+# plot
 postscript(file="Output/Figure5a.ps")
 percSNP.yrna.cancer %>%
   ggplot(aes(x=Phenotype,y=perc,fill=type)) +

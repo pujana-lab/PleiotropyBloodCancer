@@ -9,9 +9,17 @@ library(stringr) # ‘1.5.0’
 library(ggplot2) # ‘3.4.3’
 
 ## Pleitropic SNPs mapped to YRNA window
-load(file="RData/leadSNP005.RData")
+# read pleiotropic SNP list (pleio_loci.tsv). Filter to conjfdr < 0.05
+leadSNP <- fread("Data/pleio_loci.tsv") %>% as.data.frame() %>%
+  rename(cancer_trait=trait1,
+         blood_trait=trait2,
+         pval_neoplasm=pval_trait1,
+         pval_immunological=pval_trait2,
+         zscore_neoplasm=zscore_trait1,
+         zscore_immunological=zscore_trait2)
+leadSNP005 <- leadSNP %>% filter(conjfdr < 0.05)
+# number unique pleiotropic SNPs
 nSNPlead <- dim(leadSNP005 %>% distinct(snpid))[1]
-
 # YRNA + RNY annotated BiomaRt GRCh37
 ensemblGRCh37.genes <- useEnsembl(biomart = "genes", version="GRCh37", dataset = "hsapiens_gene_ensembl")
 biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
@@ -19,8 +27,7 @@ biomart37.misc <- getBM(filters="biotype",values=c("misc_RNA"),
                                        "start_position","end_position","gene_biotype","strand"), 
                         mart=ensemblGRCh37.genes)
 biomart37.yrnarny <- biomart37.misc %>% filter((external_gene_name=="Y_RNA" | grepl("RNY",external_gene_name)) & chromosome_name %in% seq(1,22))
-
-# Pleiotropic SNPs next to YRNA (+/- 50kb)
+# pleiotropic SNPs next to YRNA (+/- 50kb)
 yrna.snp <- biomart37.yrnarny %>% mutate(chromosome_name=as.integer(chromosome_name)) %>% 
   left_join(leadSNP005 %>% rename(chr=chrnum,pos=chrpos),by=c("chromosome_name"="chr"),relationship="many-to-many") %>% 
   filter(pos>=(start_position-50000) & pos<=(end_position+50000)) %>% 
@@ -32,21 +39,17 @@ n.yrna <- length(unique(yrna.snp %>% pull(ensembl_gene_id)))
 n.snp <- length(unique(yrna.snp %>% pull(snpid)))
 
 ## Test number random SNPs mapped to RNY window
-# Read reference list of SNP with requirements r2<0.8 and SNV (from referenceSNPrandom.R)
+# read reference list of SNP with requirements r2<0.8 and SNV (referenceSNPrandom.R)
 load(file="RData/SNP_EUR_proc.RData")
-
-# Generate 1000 random SNPs list (nSNPlead)
+# generate 1000 random SNPs list
 SNP.random <- list()
 for(r in seq(1,1000)) {
   print (paste0("Random",r))
   SNPs <- sample(SNP.EUR.SNV %>% pull(snpID),11000)
-  
   SNPs.split <- data.frame(snpID=SNPs,as.data.frame(do.call(rbind,str_split(SNPs, ":"))))
   colnames(SNPs.split) <- c("snpID","chr","pos")
-  
   SNPs.EUR.sel <- SNP.EUR.SNV %>% filter(snpID %in% SNPs) %>% left_join(SNPs.split,by=c("snpID"))
   SNPs.EUR.sel <- SNPs.EUR.sel %>% mutate(pos=as.integer(pos),chr=as.integer(chr))
-  
   SNPs.EUR.final <- NULL
   for (chrom in seq(1,22)) {
     print(chrom)
@@ -70,7 +73,6 @@ for(r in seq(1,1000)) {
   SNPs <- sample(SNPs.EUR.final %>% pull(snpID),nSNPlead)
   SNP.random[[paste0("random",r)]] <- SNPs.EUR.final %>% filter(snpID %in% SNPs)
 }
-
 # SNPs mapped to YRNA window for each random SNP set
 nSNPYRNArandom <- lapply(SNP.random,countSNPYRNAGRCh37)
 countSNPYRNAGRCh37 <- function(df) {
@@ -81,12 +83,10 @@ countSNPYRNAGRCh37 <- function(df) {
   n.snp <- length(unique(yrna.snp %>% pull(snpID)))
   return(n.snp)
 }
-
 nSNPYRNArandom <- unlist(nSNPYRNArandom)
 pSNPYRNApleio <- length(unique(yrna.snp %>% pull(snpid)))/nSNPlead
 pSNPYRNArandom <- nSNPYRNArandom/nSNPlead
-
-# Plot
+# plot
 postscript(file="Output/Figure5c.ps")
 data.frame(n=pSNPYRNArandom) %>% ggplot(aes(x=n)) +
   geom_histogram(color="black",fill="white") +
