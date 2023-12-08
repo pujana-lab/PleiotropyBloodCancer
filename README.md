@@ -1,6 +1,4 @@
-# PleiotropyBloodCancer
-
-Implemented code and analyses for the study entitled #“Biological basis of extensive pleiotropy between blood traits and cancer risk”#. Here, we identify pleiotropic variants between blood cell traits and cancer risk, and predict their underlying molecular and cellular alterations.
+Implemented code and analyses for the study entitled **“Biological basis of extensive pleiotropy between blood traits and cancer risk”**. Here, we identify pleiotropic variants between blood cell traits and cancer risk, and predict their underlying molecular and cellular alterations.
 
  
 
