@@ -7,7 +7,7 @@ library(tidyr) # ‘1.3.0’
 library(readxl) # ‘1.4.3’
 library(biomaRt) # ‘2.56.1’
 library(LDlinkR) # ‘1.3.0’
-# PLINK v1.90b6.26 64-bit (2 Apr 2022)  www.cog-genomics.org/plink/1.9/
+# PLINK v2.00a3 64-bit (17 Feb 2020)             www.cog-genomics.org/plink/2.0/
 
 ### 1. Check how many Sjorgen and SLE SNPs have r2 >0.4 or r2 > 0.8 with pleiotropic SNPs ####
 ## Pleiotropic SNPs nearby YRNA (270)
@@ -119,7 +119,7 @@ write.table(SNP.LD.04,file="Data/SNP_LD_lupus_sjorgen_04.csv",sep=",",row.names 
 # 2. Prepare 1000G data for PLINK
 #     1000GEURplink.sh
 # 3. Build list SNP to generate random SNPs sets (pleiotropic SNPs were removed)
-#     plink --bfile EUR_phase3_autosomes --recode --out EUR_phase3_autosomes_snp
+#     plink2 --bfile EUR_phase3_autosomes --recode --out EUR_phase3_autosomes_snp
 #     cut -f 2 EUR_phase3_autosomes_snp.map > snps.map
 #     grep -v -w -f SNPpleio.txt snps.map > snpsNOpleio.map 
 # 4. Build 1000 randon set 917 SNP
@@ -161,7 +161,7 @@ for (rn in seq(1,10)) {
       snp1 <- snp.pleio.random08[i,"snpidPleio"]
       snp2 <- snp.pleio.random08[i,"snpidRandom"]
       bash <- paste0("| grep 'R-sq' | sed 's/   R-sq = /",snp1," ",snp2," /' | cut -d' ' -f1,2,3 | sed 's/ /,/g'")
-      plinkrun <- paste("plink --bfile",plinkfile,"--ld",snp1,snp2,bash,">>",outputfile)
+      plinkrun <- paste("plink2 --bfile",plinkfile,"--ld",snp1,snp2,bash,">>",outputfile)
       system(plinkrun)
     } 
   } else {
